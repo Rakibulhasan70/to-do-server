@@ -9,8 +9,6 @@ const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 app.use(cors())
 app.use(express.json());
 
-// todo-project
-// U5jepteFx2sFHTIt
 
 
 const uri = "mongodb+srv://todo-project:U5jepteFx2sFHTIt@cluster0.faflb.mongodb.net/?retryWrites=true&w=majority";
