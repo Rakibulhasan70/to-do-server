@@ -13,7 +13,7 @@ app.use(express.json());
 
 const uri = "mongodb+srv://todo-project:U5jepteFx2sFHTIt@cluster0.faflb.mongodb.net/?retryWrites=true&w=majority";
 
-console.log(uri);
+
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
 async function run() {
@@ -22,11 +22,30 @@ async function run() {
         const productCollection = client.db('TODO').collection('to-do-app')
         // get all 
         app.get('/product', async (req, res) => {
+            console.log('query', req.query);
+            const page = parseInt(req.query.page)
+            const size = parseInt(req.query.size)
+            const query = {}
+
+            const cursor = productCollection.find(query)
+            let products
+            if (page || size) {
+                products = await cursor.skip(page * size).toArray()
+            }
+            else {
+                products = await cursor.toArray()
+            }
+            res.send(products)
+        });
+
+        // pagenation
+        app.get('/productCount', async (req, res) => {
             const query = {}
             const cursor = productCollection.find(query)
-            const result = await cursor.toArray()
-            res.send(result)
-        });
+            const count = await cursor.count();
+            res.send({ count })
+        })
+
         // insert kora
         app.post('/product', async (req, res) => {
             const newProduct = req.body
@@ -42,13 +61,31 @@ async function run() {
             res.send(result)
         });
 
+        // update kora
+        app.put('/product/:id', async (req, res) => {
+            const id = req.params.id;
+            const updatUser = req.body;
+            const filter = { _id: ObjectId(id) }
+            const option = { upsert: true };
+            const updateDoc = {
+                $set: {
+                    img: updatUser.img,
+                    name: updatUser.name,
+                    description: updatUser.description
+
+                }
+            };
+            const result = await productCollection.updateOne(filter, updateDoc, option)
+            res.send(result);
+        });
+
 
     }
     finally {
 
     }
 }
-run().catch(console.dir())
+run().catch(console.dir)
 
 
 app.get('/', (req, res) => {
