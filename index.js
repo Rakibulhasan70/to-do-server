@@ -3,12 +3,29 @@ const app = express()
 const cors = require('cors');
 const port = process.env.PORT || 5000;
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const jwt = require('jsonwebtoken')
 
 
 // middlewear
 app.use(cors())
 app.use(express.json());
 
+
+function verifyJWT(req, res, next) {
+    const authHeaders = req.headers.authorization
+    if (!authHeaders) {
+        return res.status(401).send({ message: 'unAuthorized access' })
+    }
+    const token = authHeaders.split(' ')[1];
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function (err, decoded) {
+        if (err) {
+            return res.status(403).send({ message: 'Forbidden access' })
+        }
+        req.decoded = decoded;
+        next();
+    })
+
+}
 
 
 const uri = "mongodb+srv://todo-project:U5jepteFx2sFHTIt@cluster0.faflb.mongodb.net/?retryWrites=true&w=majority";
@@ -20,6 +37,7 @@ async function run() {
     try {
         await client.connect()
         const productCollection = client.db('TODO').collection('to-do-app')
+
         // get all 
         app.get('/product', async (req, res) => {
             console.log('query', req.query);
@@ -45,6 +63,13 @@ async function run() {
             const count = await cursor.count();
             res.send({ count })
         })
+        // ///////// ge single data
+        app.get('/product/:id', async (req, res) => {
+            const id = req.params.id
+            const query = { _id: ObjectId(id) }
+            const result = await productCollection.findOne(query);
+            res.send(result)
+        });
 
         // insert kora
         app.post('/product', async (req, res) => {
