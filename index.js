@@ -11,23 +11,6 @@ app.use(cors())
 app.use(express.json());
 
 
-function verifyJWT(req, res, next) {
-    const authHeaders = req.headers.authorization
-    if (!authHeaders) {
-        return res.status(401).send({ message: 'unAuthorized access' })
-    }
-    const token = authHeaders.split(' ')[1];
-    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function (err, decoded) {
-        if (err) {
-            return res.status(403).send({ message: 'Forbidden access' })
-        }
-        req.decoded = decoded;
-        next();
-    })
-
-}
-
-
 const uri = "mongodb+srv://todo-project:U5jepteFx2sFHTIt@cluster0.faflb.mongodb.net/?retryWrites=true&w=majority";
 
 
@@ -48,7 +31,7 @@ async function run() {
             const cursor = productCollection.find(query)
             let products
             if (page || size) {
-                products = await cursor.skip(page * size).toArray()
+                products = await cursor.skip(page * size).limit(size).toArray()
             }
             else {
                 products = await cursor.toArray()
